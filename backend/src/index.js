@@ -5,11 +5,11 @@ import cors from "cors";
 
 import path from "path";
 
-import { connectDB } from "./lib/db.js";
+import { connectDB } from "./core/db.js";
 
-import authRoutes from "./routes/auth.route.js";
-import messageRoutes from "./routes/message.route.js";
-import { app, server } from "./lib/socket.js";
+import authRoutes from "./apiRoutes/auth.route.js";
+import messageRoutes from "./apiRoutes/message.route.js";
+import { app, server } from "./core/socket.js";
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
     credentials: true,
   })
 );
