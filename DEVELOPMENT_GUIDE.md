@@ -9,12 +9,11 @@
 
 ### Environment Setup
 
-#### Backend Setup
-```bash
+<!-- Backend Setup:- -->
 cd backend
 npm install
 
-# Create .env file with:
+<!-- Create .env file with: -->
 MONGO_URI=mongodb://your_connection_string
 JWT_SECRET=your_secret_key_here
 PORT=9001
@@ -28,8 +27,7 @@ CLOUDINARY_API_SECRET=your_secret
 npm run dev
 ```
 
-#### Frontend Setup
-```bash
+<!-- Frontend Setup:- -->
 cd frontend
 npm install
 
