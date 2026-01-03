@@ -10,6 +10,7 @@ import { connectDB } from "./core/db.js";
 import authRoutes from "./apiRoutes/auth.route.js";
 import messageRoutes from "./apiRoutes/message.route.js";
 import { app, server } from "./core/socket.js";
+import groupRoutes from "./apiRoutes/group.route.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use(
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/groups", groupRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

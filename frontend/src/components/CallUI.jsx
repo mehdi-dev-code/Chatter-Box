@@ -1,6 +1,6 @@
+import React, { useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
-import { useRef, useState } from "react";
 
 
 const iceServers = {
@@ -46,7 +46,7 @@ const CallUI = () => {
   React.useEffect(() => {
     if (!socket) return;
 
-    const handleIncomingCall = async ({ from }) => {
+    const handleIncomingCall = async () => {
       setCallState("incoming");
     };
 
@@ -76,7 +76,7 @@ const CallUI = () => {
       } else if (data.type === "ice-candidate") {
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       }
     };
 
