@@ -1,12 +1,13 @@
 import React, { useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import { io } from "socket.io-client";
 
 
 const iceServers = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    // Add TURN servers here for production
+    { urls: "turn:your-turn-server.com", username: "user", credential: "password" },
   ],
 };
 
@@ -21,25 +22,37 @@ const CallUI = () => {
 
   // Start a call
   const startCall = async () => {
+    console.log("Starting call...");
     setCallState("calling");
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    setLocalStream(stream);
-    peerConnectionRef.current = new RTCPeerConnection(iceServers);
-    stream.getTracks().forEach((track) => peerConnectionRef.current.addTrack(track, stream));
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      console.log("Local stream obtained:", stream);
+      setLocalStream(stream);
+      peerConnectionRef.current = new RTCPeerConnection(iceServers);
+      stream.getTracks().forEach((track) => {
+        console.log("Adding track to peer connection:", track);
+        peerConnectionRef.current.addTrack(track, stream);
+      });
 
-    peerConnectionRef.current.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("call:signal", { to: selectedUser._id, data: { type: "ice-candidate", candidate: event.candidate } });
-      }
-    };
-    peerConnectionRef.current.ontrack = (event) => {
-      setRemoteStream(event.streams[0]);
-    };
+      peerConnectionRef.current.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log("Sending ICE candidate:", event.candidate);
+          socket.emit("call:signal", { to: selectedUser._id, data: { type: "ice-candidate", candidate: event.candidate } });
+        }
+      };
+      peerConnectionRef.current.ontrack = (event) => {
+        console.log("Remote stream received:", event.streams[0]);
+        setRemoteStream(event.streams[0]);
+      };
 
-    const offer = await peerConnectionRef.current.createOffer();
-    await peerConnectionRef.current.setLocalDescription(offer);
-    socket.emit("call:user", { to: selectedUser._id, from: authUser._id });
-    socket.emit("call:signal", { to: selectedUser._id, data: { type: "offer", sdp: offer } });
+      const offer = await peerConnectionRef.current.createOffer();
+      console.log("Offer created:", offer);
+      await peerConnectionRef.current.setLocalDescription(offer);
+      socket.emit("call:user", { to: selectedUser._id, from: authUser._id });
+      socket.emit("call:signal", { to: selectedUser._id, data: { type: "offer", sdp: offer } });
+    } catch (error) {
+      console.error("Error starting call:", error);
+    }
   };
 
   // Listen for incoming call
@@ -51,32 +64,44 @@ const CallUI = () => {
     };
 
     const handleSignal = async ({ from, data }) => {
+      console.log("Signal received:", data);
       if (!peerConnectionRef.current && data.type === "offer") {
-        // Accept call
+        console.log("Handling offer...");
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log("Local stream obtained for incoming call:", stream);
         setLocalStream(stream);
         peerConnectionRef.current = new RTCPeerConnection(iceServers);
-        stream.getTracks().forEach((track) => peerConnectionRef.current.addTrack(track, stream));
+        stream.getTracks().forEach((track) => {
+          console.log("Adding track to peer connection:", track);
+          peerConnectionRef.current.addTrack(track, stream);
+        });
         peerConnectionRef.current.onicecandidate = (event) => {
           if (event.candidate) {
+            console.log("Sending ICE candidate:", event.candidate);
             socket.emit("call:signal", { to: from, data: { type: "ice-candidate", candidate: event.candidate } });
           }
         };
         peerConnectionRef.current.ontrack = (event) => {
+          console.log("Remote stream received:", event.streams[0]);
           setRemoteStream(event.streams[0]);
         };
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
         const answer = await peerConnectionRef.current.createAnswer();
+        console.log("Answer created:", answer);
         await peerConnectionRef.current.setLocalDescription(answer);
         socket.emit("call:signal", { to: from, data: { type: "answer", sdp: answer } });
         setCallState("in-call");
       } else if (data.type === "answer") {
+        console.log("Handling answer...");
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
         setCallState("in-call");
       } else if (data.type === "ice-candidate") {
+        console.log("Adding ICE candidate:", data.candidate);
         try {
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch { /* ignore */ }
+        } catch (error) {
+          console.error("Error adding ICE candidate:", error);
+        }
       }
     };
 

@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../core/db.js";
-import User from "../dataModels/user.model.js";
+import User from "../Models/user.model.js";
 
 config();
 

@@ -42,17 +42,17 @@ The application will be available at:
 
 ## Project Structure Overview
 
-### Backend Architecture
+### Server Architecture
 
-**API Layer** (`apiControllers/`)
+**Controllers** (`controllers/`)
 - `auth.controller.js`: User authentication logic
 - `message.controller.js`: Message and user retrieval
 
-**Routes** (`apiRoutes/`)
+**Routes** (`routes/`)
 - `auth.route.js`: Authentication endpoints
 - `message.route.js`: Messaging endpoints
 
-**Data Models** (`dataModels/`)
+**Models** (`models/`)
 - `user.model.js`: User schema definition
 - `message.model.js`: Message schema definition
 
@@ -65,7 +65,7 @@ The application will be available at:
 **Middleware** (`middleware/`)
 - `auth.middleware.js`: JWT verification and user authentication
 
-### Frontend Architecture
+### Client Architecture
 
 **Pages** (`pages/`)
 - `HomePage.jsx`: Main chat interface
@@ -143,9 +143,9 @@ The application will be available at:
 ### Adding New Features
 
 #### Backend Feature
-1. Create model in `dataModels/`
-2. Add controller in `apiControllers/`
-3. Create route in `apiRoutes/`
+1. Create model in `Models/`
+2. Add controller in `Controllers/`
+3. Create route in `Routes/`
 4. Import and use route in `index.js`
 
 #### Frontend Feature

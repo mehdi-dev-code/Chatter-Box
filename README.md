@@ -33,28 +33,28 @@ A modern, full-stack real-time chat application built with React, Express, and M
 - **Icons**: Lucide React
 - **Notifications**: React Hot Toast
 
-## 📋 Project Structure
+## 📂 Project Structure
 
 ```bash
 fullstack-chat-app/
-├── backend/
+├── server/  
 │   ├── src/
-│   │   ├── apiControllers/      # Request handlers
-│   │   ├── apiRoutes/           # Route definitions
-│   │   ├── dataModels/          # MongoDB schemas
-│   │   ├── middleware/          # Auth middleware
-│   │   ├── core/                # Core utilities & Socket.io
-│   │   └── index.js             # Server entry point
+│   │   ├── controllers/     
+│   │   ├── routes/           
+│   │   ├── models/           
+│   │   ├── middleware/       
+│   │   ├── core/            
+│   │   └── index.js          
 │   └── package.json
 │
-├── frontend/
+├── client/  
 │   ├── src/
-│   │   ├── pages/               # Page components
-│   │   ├── components/          # Reusable UI components
-│   │   ├── store/               # Zustand state stores
-│   │   ├── lib/                 # Utilities & axios config
-│   │   ├── constants/           # App constants
-│   │   └── App.jsx              # Root component
+│   │   ├── pages/            
+│   │   ├── components/      
+│   │   ├── store/            
+│   │   ├── lib/              
+│   │   ├── constants/       
+│   │   └── App.jsx           
 │   └── package.json
 │
 └── README.md
@@ -70,10 +70,10 @@ fullstack-chat-app/
 
 ### Backend Setup
 
-1. Navigate to backend directory:
+1. Navigate to server directory:
 
 ```bash
-cd backend
+cd server
 npm install
 ```
 
@@ -99,10 +99,10 @@ npm run dev
 
 ### Frontend Setup
 
-1. Navigate to frontend directory:
+1. Navigate to client directory:
 
 ```bash
-cd frontend
+cd client
 npm install
 ```
 
@@ -151,7 +151,7 @@ The frontend will be available at `http://localhost:5173`
 Build frontend for production:
 
 ```bash
-cd frontend
+cd client
 npm run build
 ```
 

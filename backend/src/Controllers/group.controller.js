@@ -1,5 +1,5 @@
-import Group from "../dataModels/group.model.js";
-import User from "../dataModels/user.model.js";
+import Group from "../Models/group.model.js";
+import User from "../Models/user.model.js";
 
 export const createGroup = async (req, res) => {
   try {

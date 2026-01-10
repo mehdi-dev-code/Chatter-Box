@@ -1,64 +1,67 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, X, File } from "lucide-react";
 import toast from "react-hot-toast";
+import Picker from "emoji-picker-react";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
 
-  const handleImageChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      // 10 MB limit
+      toast.error("File size exceeds 10 MB");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    setFilePreview(file);
   };
 
-  const removeImage = () => {
-    setImagePreview(null);
+  const removeFile = () => {
+    setFilePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    if (!text.trim() && !filePreview) return;
 
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
+      const formData = new FormData();
+      formData.append("text", text.trim());
+      if (filePreview) {
+        formData.append("file", filePreview);
+      }
+
+      await sendMessage(formData);
 
       // Clear form
       setText("");
-      setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      removeFile();
     } catch (error) {
       console.error("Failed to send message:", error);
     }
   };
 
+  const handleEmojiClick = (emojiObject) => {
+    setText((prevMessage) => prevMessage + emojiObject.emoji);
+  };
+
   return (
     <div className="p-4 w-full">
-      {imagePreview && (
+      {filePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
-            />
+            <p className="text-sm text-gray-500">{filePreview.name}</p>
             <button
-              onClick={removeImage}
+              onClick={removeFile}
               className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
               flex items-center justify-center"
               type="button"
@@ -80,25 +83,37 @@ const MessageInput = () => {
           />
           <input
             type="file"
-            accept="image/*"
             className="hidden"
             ref={fileInputRef}
-            onChange={handleImageChange}
+            onChange={handleFileChange}
           />
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle
-                     ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            className="btn btn-circle"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Image size={20} />
+            <File size={20} />
           </button>
+
+          <button
+            type="button"
+            className="btn btn-circle"
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+          >
+            😀
+          </button>
+
+          {showEmojiPicker && (
+            <div className="absolute bottom-16 left-4 z-10">
+              <Picker onEmojiClick={handleEmojiClick} />
+            </div>
+          )}
         </div>
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={!text.trim() && !filePreview}
         >
           <Send size={22} />
         </button>
