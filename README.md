@@ -5,6 +5,7 @@ A modern, full-stack real-time chat application built with React, Express, and M
 ## 🚀 Key Features
 
 - **Real-Time Messaging**: Instant message delivery using Socket.io
+- **Voice & Video Call Module**: One-to-one voice and video calling using WebRTC
 - **User Authentication**: Secure JWT-based authentication with password hashing
 - **Online Status**: Live user presence tracking across the platform
 - **Image Sharing**: Send images directly in conversations via Cloudinary

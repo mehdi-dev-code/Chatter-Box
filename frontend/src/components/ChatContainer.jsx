@@ -7,6 +7,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
+import { FileIcon, DownloadCloud } from "lucide-react"; // Icons for files
 
 const ChatContainer = () => {
   const {
@@ -22,7 +23,6 @@ const ChatContainer = () => {
 
   useEffect(() => {
     getMessages(selectedUser._id);
-
     subscribeToMessages();
 
     return () => unsubscribeFromMessages();
@@ -45,7 +45,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-auto">
+    <div className="flex-1 flex flex-col overflow-auto bg-base-100">
       <ChatHeader />
       <CallUI />
 
@@ -54,9 +54,8 @@ const ChatContainer = () => {
           <div
             key={message._id}
             className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
-            ref={messageEndRef}
           >
-            <div className=" chat-image avatar">
+            <div className="chat-image avatar">
               <div className="size-10 rounded-full border">
                 <img
                   src={
@@ -73,16 +72,45 @@ const ChatContainer = () => {
                 {formatMessageTime(message.createdAt)}
               </time>
             </div>
-            <div className="chat-bubble flex flex-col">
-              {message.image && (
+            <div className="chat-bubble flex flex-col gap-2 bg-base-200 text-base-content shadow-sm">
+              {/* IMAGE RENDERING */}
+              {message.file && message.fileType?.startsWith("image/") && (
                 <img
-                  src={message.image}
+                  src={message.file}
                   alt="Attachment"
-                  className="sm:max-w-[200px] rounded-md mb-2"
+                  className="sm:max-w-[250px] rounded-md border border-base-300"
                 />
               )}
-              {message.text && <p>{message.text}</p>}
+
+              {/* DOCUMENT/FILE RENDERING */}
+              {message.file && !message.fileType?.startsWith("image/") && (
+                <div className="flex items-center gap-3 p-3 bg-base-300 rounded-lg border border-base-100">
+                  <div className="p-2 bg-primary/20 rounded-full">
+                    <FileIcon className="size-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate max-w-[120px]">
+                      {message.file.split("/").pop().split("?")[0] || "Attachment"}
+                    </p>
+                    <p className="text-[10px] opacity-60">Document</p>
+                  </div>
+                  <a
+                    href={message.file}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="p-2 hover:bg-base-100 rounded-full transition-colors"
+                  >
+                    <DownloadCloud className="size-5 text-primary" />
+                  </a>
+                </div>
+              )}
+
+              {/* TEXT RENDERING */}
+              {message.text && <p className="leading-relaxed">{message.text}</p>}
             </div>
+            {/* Invisible div to help with scrolling */}
+            <div ref={messageEndRef} />
           </div>
         ))}
       </div>
