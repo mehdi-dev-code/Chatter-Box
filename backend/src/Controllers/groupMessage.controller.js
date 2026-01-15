@@ -1,6 +1,6 @@
 import Message from "../Models/message.model.js";
 import Group from "../Models/group.model.js";
-import { getReceiverSocketId, io } from "../core/socket.js";
+import { getReceiverSocketIds, io } from "../core/socket.js";
 
 export const getGroupMessages = async (req, res) => {
   try {
