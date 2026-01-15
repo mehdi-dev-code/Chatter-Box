@@ -1,5 +1,5 @@
-import Message from "../Models/message.model.js";
-import Group from "../Models/group.model.js";
+import Message from "../models/message.model.js";
+import Group from "../models/group.model.js";
 import { getReceiverSocketIds, io } from "../core/socket.js";
 
 export const getGroupMessages = async (req, res) => {

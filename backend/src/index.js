@@ -6,9 +6,9 @@ import fs from "fs";
 import path from "path";
 
 import { connectDB } from "./core/db.js";
-import authRoutes from "./Routes/auth.route.js";
-import messageRoutes from "./Routes/message.route.js";
-import groupRoutes from "./Routes/group.route.js";
+import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
+import groupRoutes from "./routes/group.route.js";
 import { app, server } from "./core/socket.js";
 
 dotenv.config();

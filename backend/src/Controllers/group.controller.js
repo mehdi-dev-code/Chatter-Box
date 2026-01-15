@@ -1,5 +1,5 @@
-import Group from "../Models/group.model.js";
-import User from "../Models/user.model.js";
+import Group from "../models/group.model.js";
+import User from "../models/user.model.js";
 
 export const createGroup = async (req, res) => {
   try {

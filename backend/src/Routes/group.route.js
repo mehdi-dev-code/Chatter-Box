@@ -1,6 +1,6 @@
 import express from "express";
-import { createGroup, getUserGroups, addGroupMember, removeGroupMember } from "../Controllers/group.controller.js";
-import { getGroupMessages, sendGroupMessage } from "../Controllers/groupMessage.controller.js";
+import { createGroup, getUserGroups, addGroupMember, removeGroupMember } from "../controllers/group.controller.js";
+import { getGroupMessages, sendGroupMessage } from "../controllers/groupMessage.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
