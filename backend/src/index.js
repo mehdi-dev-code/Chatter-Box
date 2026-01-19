@@ -9,6 +9,7 @@ import { connectDB } from "./core/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import groupRoutes from "./routes/group.route.js";
+import voiceRoutes from './routes/voice.route.js';
 import { app, server } from "./core/socket.js";
 
 dotenv.config();
@@ -17,10 +18,17 @@ const PORT = process.env.PORT || 9001;
 const __dirname = path.resolve();
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "../uploads");
+const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
   console.log("Created 'uploads/' directory");
+}
+
+// Ensure voices directory exists
+const voicesDir = path.join(__dirname, "uploads/voices");
+if (!fs.existsSync(voicesDir)) {
+  fs.mkdirSync(voicesDir, { recursive: true });
+  console.log("Created 'uploads/voices/' directory");
 }
 
 // Global middlewares
@@ -39,6 +47,7 @@ app.use("/uploads", express.static(uploadsDir));
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/voice", voiceRoutes); // ✅ ADDED
 
 // Production frontend
 if (process.env.NODE_ENV === "production") {

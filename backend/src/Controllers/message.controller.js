@@ -1,28 +1,7 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-import multer from "multer";
-import path from "path";
-import { getReceiverSocketIds, io } from "../core/socket.js"; // updated import
-
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter: (req, file, cb) => {
-    const fileTypes = /jpeg|jpg|png|pdf|doc|docx/;
-    const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimeType = fileTypes.test(file.mimetype);
-    if (extName && mimeType) cb(null, true);
-    else cb(new Error("Invalid file type. Only images and documents allowed."));
-  }
-});
-
-export const uploadMiddleware = upload.single("file");
+import cloudinary from "../core/cloudinary.js";
+import { getReceiverSocketIds, io } from "../core/socket.js";
 
 // Get all other users for sidebar
 export const getUsersForSidebar = async (req, res) => {
@@ -62,7 +41,7 @@ export const getMessages = async (req, res) => {
   }
 };
 
-// Send message (text + optional file) and emit to all receiver sockets
+// Send message (Text + optional file/image)
 export const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
@@ -76,12 +55,37 @@ export const sendMessage = async (req, res) => {
     if (!receiverId.match(/^[0-9a-fA-F]{24}$/))
       return res.status(400).json({ error: "Invalid receiver ID." });
 
-    let fileUrl;
+    let fileUrl = null;
+    let fileType = null;
+
+    // Handle file upload to Cloudinary
     if (req.file) {
-      fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      try {
+        // Convert buffer to base64
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+        // Upload to Cloudinary
+        const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+          resource_type: "auto",
+          folder: "chat_attachments",
+        });
+
+        fileUrl = uploadResponse.secure_url;
+        fileType = req.file.mimetype;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return res.status(500).json({ error: "File upload failed" });
+      }
     }
 
-    const newMessage = new Message({ senderId, receiverId, text, file: fileUrl });
+    const newMessage = new Message({ 
+      senderId, 
+      receiverId, 
+      text, 
+      file: fileUrl,
+      fileType: fileType,
+    });
     await newMessage.save();
 
     // Emit message to all receiver sockets
@@ -104,4 +108,3 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-

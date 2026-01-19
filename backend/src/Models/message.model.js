@@ -21,6 +21,15 @@ const messageSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    file: {
+      type: String,
+    },
+    voice: {
+      type: String,
+    },
+    fileType: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

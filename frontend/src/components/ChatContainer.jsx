@@ -7,7 +7,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
-import { FileIcon, DownloadCloud } from "lucide-react"; // Icons for files
+import { FileIcon, DownloadCloud } from "lucide-react";
 
 const ChatContainer = () => {
   const {
@@ -24,12 +24,11 @@ const ChatContainer = () => {
   useEffect(() => {
     getMessages(selectedUser._id);
     subscribeToMessages();
-
     return () => unsubscribeFromMessages();
   }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current && messages) {
+    if (messageEndRef.current && messages.length) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -49,6 +48,7 @@ const ChatContainer = () => {
       <ChatHeader />
       <CallUI />
 
+      {/* Chat messages container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
@@ -67,12 +67,28 @@ const ChatContainer = () => {
                 />
               </div>
             </div>
+
             <div className="chat-header mb-1">
               <time className="text-xs opacity-50 ml-1">
                 {formatMessageTime(message.createdAt)}
               </time>
             </div>
+
             <div className="chat-bubble flex flex-col gap-2 bg-base-200 text-base-content shadow-sm">
+              {/* VOICE MESSAGE RENDERING */}
+              {message.voice && (
+                <div className="flex items-center gap-2 p-2 bg-slate-700 rounded-lg">
+                  <audio 
+                    controls 
+                    src={`http://localhost:9001/${message.voice}`} 
+                    className="max-w-full"
+                    preload="metadata"
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              )}
+
               {/* IMAGE RENDERING */}
               {message.file && message.fileType?.startsWith("image/") && (
                 <img
@@ -109,14 +125,17 @@ const ChatContainer = () => {
               {/* TEXT RENDERING */}
               {message.text && <p className="leading-relaxed">{message.text}</p>}
             </div>
-            {/* Invisible div to help with scrolling */}
-            <div ref={messageEndRef} />
           </div>
         ))}
+
+        {/* Invisible div for scrolling */}
+        <div ref={messageEndRef} />
       </div>
 
+      {/* Message input */}
       <MessageInput />
     </div>
   );
 };
+
 export default ChatContainer;

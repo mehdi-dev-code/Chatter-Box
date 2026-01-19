@@ -1,21 +1,53 @@
 import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Send, X, File, Smile, Paperclip } from "lucide-react";
+import { useAuthStore } from "../store/useAuthStore";
+import {
+  Send,
+  X,
+  File,
+  Smile,
+  Paperclip,
+  Mic,
+  Trash2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Picker from "emoji-picker-react";
+import useVoiceRecorder from "./VoiceRecorder"; // ✅ Fixed import
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
 
+  // Voice states
+  const [recording, setRecording] = useState(false);
+  const [cancelRecording, setCancelRecording] = useState(false);
+  const startX = useRef(0);
+
+  const fileInputRef = useRef(null);
+
+  const { sendMessage, selectedUser } = useChatStore();
+  const { authUser } = useAuthStore();
+
+  // ================= VOICE RECORDER =================
+  const recorder = useVoiceRecorder({ // ✅ Fixed: using as hook
+    chatId: selectedUser?._id,
+    senderId: authUser?._id,
+    onSend: () => {
+      setRecording(false);
+      setCancelRecording(false);
+    },
+    onCancel: () => {
+      setRecording(false);
+      setCancelRecording(false);
+    },
+  });
+
+  // ================= FILE HANDLING =================
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 10 MB limit as per your requirement
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File size exceeds 10 MB");
       return;
@@ -29,48 +61,73 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // ================= TEXT SEND =================
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !filePreview) return;
 
-    try {
-      const formData = new FormData();
-      formData.append("text", text.trim());
-      if (filePreview) {
-        formData.append("file", filePreview); // Key must match backend Multer config
-      }
-
-      await sendMessage(formData);
-
-      // Clear form on success
-      setText("");
-      removeFile();
-      setShowEmojiPicker(false);
-    } catch (error) {
-      console.error("Failed to send message:", error);
+    const formData = new FormData();
+    formData.append("text", text.trim());
+    if (filePreview) {
+      formData.append("file", filePreview);
     }
+
+    await sendMessage(formData);
+
+    setText("");
+    removeFile();
+    setShowEmojiPicker(false);
   };
 
   const handleEmojiClick = (emojiObject) => {
     setText((prev) => prev + emojiObject.emoji);
   };
 
+  const startRecording = (e) => {
+    setRecording(true);
+    setCancelRecording(false);
+    startX.current = e.touches ? e.touches[0].clientX : e.clientX;
+    recorder.start();
+  };
+
+  const moveRecording = (e) => {
+    if (!recording) return;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    if (startX.current - x > 80) {
+      setCancelRecording(true);
+    }
+  };
+
+  const stopRecording = () => {
+    if (!recording) return;
+
+    if (cancelRecording) {
+      recorder.cancel();
+    } else {
+      recorder.stop();
+    }
+  };
+
+  // ================= UI =================
   return (
     <div className="p-4 w-full relative">
-      {/* IMPROVED: Better File Preview UI for Docs/Images */}
+      {recording && (
+        <p className="text-xs text-center text-slate-400 mb-2">
+          {cancelRecording
+            ? "Release to cancel"
+            : "Recording… slide left to cancel"}
+        </p>
+      )}
+
       {filePreview && (
         <div className="mb-3 flex items-center gap-2">
-          <div className="relative flex items-center gap-2 p-2 bg-slate-800 rounded-lg border border-slate-700">
+          <div className="flex items-center gap-2 p-2 bg-slate-800 rounded-lg border border-slate-700">
             <Paperclip className="size-4 text-blue-400" />
             <span className="text-xs text-slate-300 truncate max-w-[150px]">
               {filePreview.name}
             </span>
-            <button
-              onClick={removeFile}
-              className="ml-1 text-rose-500 hover:text-rose-400"
-              type="button"
-            >
-              <X className="size-4" />
+            <button onClick={removeFile} type="button">
+              <X className="size-4 text-rose-500" />
             </button>
           </div>
         </div>
@@ -80,13 +137,12 @@ const MessageInput = () => {
         <div className="flex-1 flex gap-2">
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md bg-slate-800"
+            className="w-full input input-bordered bg-slate-800"
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          
-          {/* UPDATED: Added accept types */}
+
           <input
             type="file"
             accept="image/*,application/pdf,.doc,.docx,.txt"
@@ -97,18 +153,18 @@ const MessageInput = () => {
 
           <button
             type="button"
-            className={`btn btn-circle btn-sm sm:btn-md ${filePreview ? "text-blue-400" : "text-slate-400"}`}
+            className="btn btn-circle text-slate-400"
             onClick={() => fileInputRef.current?.click()}
           >
-            <File size={20} />
+            <File size={18} />
           </button>
 
           <button
             type="button"
-            className="btn btn-circle btn-sm sm:btn-md text-slate-400"
-            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="btn btn-circle text-slate-400"
+            onClick={() => setShowEmojiPicker((p) => !p)}
           >
-            <Smile size={20} />
+            <Smile size={18} />
           </button>
 
           {showEmojiPicker && (
@@ -117,14 +173,27 @@ const MessageInput = () => {
             </div>
           )}
         </div>
-        
-        <button
-          type="submit"
-          className="btn btn-circle btn-sm sm:btn-md btn-primary"
-          disabled={!text.trim() && !filePreview}
-        >
-          <Send size={20} />
-        </button>
+
+        {(text.trim() || filePreview) ? (
+          <button type="submit" className="btn btn-circle btn-primary">
+            <Send size={18} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onMouseDown={startRecording}
+            onMouseMove={moveRecording}
+            onMouseUp={stopRecording}
+            onTouchStart={startRecording}
+            onTouchMove={moveRecording}
+            onTouchEnd={stopRecording}
+            className={`btn btn-circle ${
+              recording ? "bg-red-500 text-white" : "btn-primary"
+            }`}
+          >
+            {cancelRecording ? <Trash2 size={18} /> : <Mic size={18} />}
+          </button>
+        )}
       </form>
     </div>
   );

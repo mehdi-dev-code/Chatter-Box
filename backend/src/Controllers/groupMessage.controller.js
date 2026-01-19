@@ -22,6 +22,7 @@ export const sendGroupMessage = async (req, res) => {
     const group = await Group.findById(groupId);
     if (!group) return res.status(404).json({ error: "Group not found" });
     if (!group.members.includes(req.user._id)) return res.status(403).json({ error: "Not a group member" });
+    
     const newMessage = new Message({
       senderId: req.user._id,
       groupId,
@@ -29,13 +30,17 @@ export const sendGroupMessage = async (req, res) => {
       image,
     });
     await newMessage.save();
-    // Emit to all group members except sender
+    
+    // Emit to all group members except sender (FIXED)
     group.members.forEach(memberId => {
       if (String(memberId) !== String(req.user._id)) {
-        const socketId = getReceiverSocketId(String(memberId));
-        if (socketId) io.to(socketId).emit("newGroupMessage", newMessage);
+        const socketIds = getReceiverSocketIds(String(memberId)); // Fixed: plural
+        socketIds.forEach(socketId => {
+          io.to(socketId).emit("newGroupMessage", newMessage);
+        });
       }
     });
+    
     res.status(201).json(newMessage);
   } catch (err) {
     res.status(500).json({ error: err.message });
